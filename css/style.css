@@ -1,0 +1,529 @@
+/* css/style.css — Dark theme, responsive grid, Focus Mode, animations */
+
+/* ─── Reset & base ───────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1a1a2e;
+  --bg2: #16213e;
+  --bg3: #0f3460;
+  --accent: #e94560;
+  --accent2: #53d8fb;
+  --text: #eaeaea;
+  --text-muted: #9a9ab0;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --card-bg: #1e2a4a;
+  --card-border: #2a3a5e;
+  --radius: 14px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+input[type="text"],
+input[type="number"] {
+  background: var(--bg3);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+  border-color: var(--accent2);
+}
+
+/* ─── Configuration View ─────────────────────────────────────────────────── */
+
+.config-view {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.app-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent2);
+  letter-spacing: 1px;
+}
+
+.config-section {
+  background: var(--bg2);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.config-section h2 {
+  font-size: 1.1rem;
+  color: var(--accent2);
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.form-row label {
+  flex: 1;
+  min-width: 180px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.form-row input {
+  width: 100px;
+}
+
+/* Add activity form */
+
+.add-activity-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.add-activity-form input[type="text"] {
+  flex: 1;
+  min-width: 140px;
+}
+
+.add-activity-form input[type="number"] {
+  width: 90px;
+}
+
+/* Activity list */
+
+.activities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty-hint {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.activity-row {
+  display: flex;
+  align-items: center;
+  background: var(--bg3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  gap: 12px;
+}
+
+.activity-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.activity-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.activity-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.seg-preview {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+
+.btn-primary {
+  background: var(--accent2);
+  color: #000;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover { opacity: 0.85; }
+
+.btn-remove {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.btn-remove:hover { background: rgba(233,69,96,0.15); }
+
+.btn-start {
+  display: block;
+  width: 100%;
+  padding: 18px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius);
+  margin-top: 24px;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 24px rgba(233,69,96,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(233,69,96,0.55);
+}
+
+.btn-disabled {
+  background: var(--card-border) !important;
+  color: var(--text-muted) !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+/* ─── Budget ─────────────────────────────────────────────────────────────── */
+
+.budget-section {
+  background: var(--bg2);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 0;
+}
+
+.budget-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.budget-bar strong.budget-over {
+  color: var(--accent);
+}
+
+.budget-detail {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ─── Focus View ─────────────────────────────────────────────────────────── */
+
+.focus-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 0 0 80px;
+}
+
+.focus-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--card-border);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.session-time {
+  display: flex;
+  gap: 24px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.session-time strong {
+  color: var(--text);
+}
+
+.btn-exit {
+  background: var(--bg3);
+  color: var(--text-muted);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.btn-exit:hover { color: var(--accent); }
+
+/* ─── Focus Grid ─────────────────────────────────────────────────────────── */
+
+.focus-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols, 2), 1fr);
+  gap: 12px;
+  padding: 12px;
+  flex: 1;
+}
+
+/* ─── Focus Cards ────────────────────────────────────────────────────────── */
+
+.focus-card {
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+  text-align: center;
+  min-height: 160px;
+  user-select: none;
+}
+
+.focus-card:hover:not(.card-done) {
+  transform: translateY(-2px);
+  border-color: var(--accent2);
+}
+
+.focus-card:focus {
+  outline: 2px solid var(--accent2);
+  outline-offset: 2px;
+}
+
+.card-active {
+  border-color: var(--accent) !important;
+  background: #2a1a2e;
+  box-shadow: 0 0 20px rgba(233,69,96,0.35), 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.card-break.card-active {
+  border-color: var(--accent2) !important;
+  background: #0f2a3e;
+  box-shadow: 0 0 20px rgba(83,216,251,0.3), 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.card-done {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: transparent;
+}
+
+.card-paused {
+  border-style: dashed !important;
+}
+
+.card-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.card-timer {
+  font-size: 2.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+  color: var(--accent2);
+  line-height: 1;
+}
+
+.card-active .card-timer {
+  color: var(--accent);
+}
+
+.card-status {
+  font-size: 1rem;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.card-segments {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.seg {
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+
+.seg-done    { color: var(--success); }
+.seg-active  { color: var(--accent); }
+.seg-paused  { color: var(--warning); }
+.seg-pending { color: var(--text-muted); }
+
+.seg-count {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.card-paused-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--warning);
+  background: rgba(255,152,0,0.15);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+/* ─── Pulse animation ────────────────────────────────────────────────────── */
+
+@keyframes pulse {
+  0%   { transform: scale(1); box-shadow: 0 0 20px rgba(233,69,96,0.35); }
+  50%  { transform: scale(1.03); box-shadow: 0 0 35px rgba(233,69,96,0.65); }
+  100% { transform: scale(1); box-shadow: 0 0 20px rgba(233,69,96,0.35); }
+}
+
+.card-pulse {
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+/* ─── Floating controls ──────────────────────────────────────────────────── */
+
+.float-controls {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 100;
+}
+
+.btn-float {
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+  transition: transform 0.15s, opacity 0.2s;
+  min-width: 110px;
+}
+
+.btn-float:hover {
+  transform: scale(1.05);
+}
+
+.btn-skip {
+  background: rgba(233,69,96,0.85);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(233,69,96,0.4);
+}
+
+.btn-pause {
+  background: rgba(83,216,251,0.85);
+  color: #000;
+  box-shadow: 0 4px 14px rgba(83,216,251,0.4);
+}
+
+.btn-resume {
+  background: rgba(76,175,80,0.85);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(76,175,80,0.4);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .focus-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .focus-card {
+    min-height: 120px;
+    padding: 14px 10px;
+    gap: 6px;
+  }
+
+  .card-timer {
+    font-size: 2rem;
+  }
+
+  .card-name {
+    font-size: 1rem;
+  }
+
+  .float-controls {
+    bottom: 12px;
+    right: 12px;
+    flex-direction: row;
+  }
+
+  .btn-float {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    min-width: 0;
+  }
+}
+
+@media (min-width: 900px) {
+  .focus-grid {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .focus-card {
+    min-height: 220px;
+    padding: 28px 20px;
+  }
+}
