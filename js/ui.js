@@ -242,6 +242,10 @@ export function renderConfigView() {
 
 // ─── Focus Mode ───────────────────────────────────────────────────────────────
 
+function isTimerPaused() {
+  return !!(state.activeTimer && state.activeTimer.pausedRemainingSeconds !== null);
+}
+
 export function renderFocusMode() {
   const app = document.getElementById('app');
   const existingFocusView = app.querySelector('.focus-view');
@@ -284,10 +288,11 @@ function fullRenderFocusMode(app) {
     .join('');
 
   // Break button card — only include when break > 0
-  const breakCard = state.defaultTimer.durationMinutes > 0 ? buildBreakCard() : '';
+  const shouldShowBreakCard = Number(state.defaultTimer.durationMinutes) > 0;
+  const breakCard = shouldShowBreakCard ? buildBreakCard() : '';
 
   // Total card count for grid layout
-  const totalCards = state.activities.length + (state.defaultTimer.durationMinutes > 0 ? 1 : 0);
+  const totalCards = state.activities.length + (shouldShowBreakCard ? 1 : 0);
 
   // Active timer info for skip
   const timerActive = !!state.activeTimer;
@@ -330,7 +335,7 @@ function fullRenderFocusMode(app) {
   if (timerActive) {
     document.getElementById('btnSkip').addEventListener('click', skipTimer);
     document.getElementById('btnPauseResume').addEventListener('click', () => {
-      if (isPaused) {
+      if (isTimerPaused()) {
         resumeTimer();
       } else {
         pauseTimer();
@@ -349,7 +354,7 @@ function fullRenderFocusMode(app) {
           state.activeTimer.activityId === a.id;
 
         if (isCurrentlyActive) {
-          if (isPaused) {
+          if (isTimerPaused()) {
             resumeTimer();
           } else {
             pauseTimer();
@@ -368,7 +373,7 @@ function fullRenderFocusMode(app) {
       const isBreakActive =
         state.activeTimer && state.activeTimer.type === 'defaultBreak';
       if (isBreakActive) {
-        if (isPaused) {
+        if (isTimerPaused()) {
           resumeTimer();
         } else {
           pauseTimer();
@@ -411,7 +416,7 @@ function incrementalUpdateFocusMode() {
   });
 
   // Update break card
-  if (state.defaultTimer.durationMinutes > 0) {
+  if (Number(state.defaultTimer.durationMinutes) > 0) {
     updateBreakCard();
   }
 
@@ -511,13 +516,19 @@ function updateBreakCard() {
 }
 
 function updateFloatControls() {
-  const isPaused = state.activeTimer && state.activeTimer.pausedRemainingSeconds !== null;
-  const btnPauseResume = document.getElementById('btnPauseResume');
-  if (!btnPauseResume) return;
-
-  btnPauseResume.textContent = isPaused ? '▶ Resume' : '⏸ Pause';
-  btnPauseResume.className = `btn-float ${isPaused ? 'btn-resume' : 'btn-pause'}`;
-  btnPauseResume.title = isPaused ? 'Resume' : 'Pause';
+  const btn = document.getElementById('btnPauseResume');
+  if (!btn) return;
+  if (isTimerPaused()) {
+    btn.textContent = '▶ Resume';
+    btn.title = 'Resume';
+    btn.classList.remove('btn-pause');
+    btn.classList.add('btn-resume');
+  } else {
+    btn.textContent = '⏸ Pause';
+    btn.title = 'Pause';
+    btn.classList.remove('btn-resume');
+    btn.classList.add('btn-pause');
+  }
 }
 
 function buildActivityCard(activity) {
