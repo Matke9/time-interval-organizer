@@ -242,22 +242,63 @@ export function renderConfigView() {
 
 // ─── Focus Mode ───────────────────────────────────────────────────────────────
 
+function isTimerPaused() {
+  return !!(state.activeTimer && state.activeTimer.pausedRemainingSeconds !== null);
+}
+
 export function renderFocusMode() {
   const app = document.getElementById('app');
+  const existingFocusView = app.querySelector('.focus-view');
 
-  const { elapsedSec, remainingSec } = getSessionStats();
+  if (!existingFocusView) {
+    fullRenderFocusMode(app);
+    return;
+  }
 
+  // Check for structural changes that require a full re-render
+  const timerActive = !!state.activeTimer;
+  const floatControlsExist = !!document.querySelector('.float-controls');
+  if (timerActive !== floatControlsExist) {
+    fullRenderFocusMode(app);
+    return;
+  }
+
+  // Check if any card transitioned to done (structural change)
+  for (const activity of state.activities) {
+    const card = document.getElementById(`card-${activity.id}`);
+    if (!card) {
+      fullRenderFocusMode(app);
+      return;
+    }
+    const done = isActivityComplete(activity.id);
+    const wasDone = card.classList.contains('card-done');
+    if (done !== wasDone) {
+      fullRenderFocusMode(app);
+      return;
+    }
+  }
+
+  incrementalUpdateFocusMode();
+}
+
+function fullRenderFocusMode(app) {
   // Build activity cards
   const activityCards = state.activities
     .map((a) => buildActivityCard(a))
     .join('');
 
-  // Break button card
-  const breakCard = buildBreakCard();
+  // Break button card — only include when break > 0
+  const shouldShowBreakCard = Number(state.defaultTimer.durationMinutes) > 0;
+  const breakCard = shouldShowBreakCard ? buildBreakCard() : '';
+
+  // Total card count for grid layout
+  const totalCards = state.activities.length + (shouldShowBreakCard ? 1 : 0);
 
   // Active timer info for skip
   const timerActive = !!state.activeTimer;
   const isPaused = state.activeTimer && state.activeTimer.pausedRemainingSeconds !== null;
+
+  const { elapsedSec, remainingSec } = getSessionStats();
 
   app.innerHTML = `
     <div class="focus-view">
@@ -269,7 +310,7 @@ export function renderFocusMode() {
         <button id="btnExitFocus" class="btn-exit" title="Exit Focus Mode (ESC)">✕ Exit</button>
       </div>
 
-      <div class="focus-grid" style="--grid-cols: ${getGridCols(state.activities.length + 1)}">
+      <div class="focus-grid" style="--grid-cols: ${getGridCols(totalCards)}">
         ${activityCards}
         ${breakCard}
       </div>
@@ -294,7 +335,7 @@ export function renderFocusMode() {
   if (timerActive) {
     document.getElementById('btnSkip').addEventListener('click', skipTimer);
     document.getElementById('btnPauseResume').addEventListener('click', () => {
-      if (isPaused) {
+      if (isTimerPaused()) {
         resumeTimer();
       } else {
         pauseTimer();
@@ -313,8 +354,7 @@ export function renderFocusMode() {
           state.activeTimer.activityId === a.id;
 
         if (isCurrentlyActive) {
-          // Toggle pause/resume for this activity
-          if (isPaused) {
+          if (isTimerPaused()) {
             resumeTimer();
           } else {
             pauseTimer();
@@ -333,7 +373,7 @@ export function renderFocusMode() {
       const isBreakActive =
         state.activeTimer && state.activeTimer.type === 'defaultBreak';
       if (isBreakActive) {
-        if (isPaused) {
+        if (isTimerPaused()) {
           resumeTimer();
         } else {
           pauseTimer();
@@ -357,6 +397,137 @@ export function renderFocusMode() {
         startDefaultTimer();
       }
     });
+  }
+}
+
+function incrementalUpdateFocusMode() {
+  // Update session stats
+  const { elapsedSec, remainingSec } = getSessionStats();
+  const sessionTimeEl = document.querySelector('.session-time');
+  if (sessionTimeEl) {
+    const spans = sessionTimeEl.querySelectorAll('strong');
+    if (spans[0]) spans[0].textContent = formatTime(elapsedSec);
+    if (spans[1]) spans[1].textContent = formatTime(remainingSec);
+  }
+
+  // Update each activity card
+  state.activities.forEach((a) => {
+    updateActivityCard(a);
+  });
+
+  // Update break card
+  if (Number(state.defaultTimer.durationMinutes) > 0) {
+    updateBreakCard();
+  }
+
+  // Update pause/resume button text
+  updateFloatControls();
+}
+
+function updateActivityCard(activity) {
+  const card = document.getElementById(`card-${activity.id}`);
+  if (!card) return;
+
+  const done = isActivityComplete(activity.id);
+  const isActive =
+    state.activeTimer &&
+    state.activeTimer.type === 'activity' &&
+    state.activeTimer.activityId === activity.id;
+  const isPaused = isActive && state.activeTimer.pausedRemainingSeconds !== null;
+
+  let remainingSeconds = 0;
+  if (isActive) {
+    remainingSeconds = isPaused
+      ? state.activeTimer.pausedRemainingSeconds
+      : Math.max(0, Math.floor((state.activeTimer.endTime - Date.now()) / 1000));
+  } else {
+    const pending = activity.segments.find(
+      (s) => s.status === 'pending' || s.status === 'paused'
+    );
+    remainingSeconds = pending ? pending.remainingSeconds : 0;
+  }
+
+  const totalDuration = activity.durationMinutes * 60;
+  const pct = totalDuration > 0 ? remainingSeconds / totalDuration : 0;
+  const pulse = isActive && !isPaused && pct <= 0.1 && remainingSeconds > 0;
+
+  card.classList.toggle('card-active', !!(isActive && !done));
+  card.classList.toggle('card-pulse', !!pulse);
+  card.classList.toggle('card-paused', !!isPaused);
+
+  if (!done) {
+    const timerEl = card.querySelector('.card-timer');
+    if (timerEl) timerEl.textContent = formatTime(remainingSeconds);
+  }
+
+  const completedCount = activity.segments.filter((s) => s.status === 'completed').length;
+  const totalCount = activity.segments.length;
+  const segmentsEl = card.querySelector('.card-segments');
+  if (segmentsEl) {
+    segmentsEl.innerHTML = `${buildSegmentBar(activity.segments)}<span class="seg-count">${completedCount}/${totalCount}</span>`;
+  }
+
+  // Show/hide paused label
+  let pausedLabel = card.querySelector('.card-paused-label');
+  if (isPaused && !pausedLabel) {
+    pausedLabel = document.createElement('div');
+    pausedLabel.className = 'card-paused-label';
+    pausedLabel.textContent = 'PAUSED';
+    card.appendChild(pausedLabel);
+  } else if (!isPaused && pausedLabel) {
+    pausedLabel.remove();
+  }
+}
+
+function updateBreakCard() {
+  const card = document.getElementById('card-break');
+  if (!card) return;
+
+  const isBreakActive = state.activeTimer && state.activeTimer.type === 'defaultBreak';
+  const isPaused = isBreakActive && state.activeTimer.pausedRemainingSeconds !== null;
+
+  let remainingSeconds = state.defaultTimer.durationMinutes * 60;
+  if (isBreakActive) {
+    remainingSeconds = isPaused
+      ? state.activeTimer.pausedRemainingSeconds
+      : Math.max(0, Math.floor((state.activeTimer.endTime - Date.now()) / 1000));
+  }
+
+  const totalDuration = state.defaultTimer.durationMinutes * 60;
+  const pct = totalDuration > 0 ? remainingSeconds / totalDuration : 0;
+  const pulse = isBreakActive && !isPaused && pct <= 0.1 && remainingSeconds > 0;
+
+  card.classList.toggle('card-active', !!isBreakActive);
+  card.classList.toggle('card-pulse', !!pulse);
+  card.classList.toggle('card-paused', !!isPaused);
+
+  const timerEl = card.querySelector('.card-timer');
+  if (timerEl) timerEl.textContent = formatTime(remainingSeconds);
+
+  let pausedLabel = card.querySelector('.card-paused-label');
+  if (isPaused && !pausedLabel) {
+    pausedLabel = document.createElement('div');
+    pausedLabel.className = 'card-paused-label';
+    pausedLabel.textContent = 'PAUSED';
+    card.appendChild(pausedLabel);
+  } else if (!isPaused && pausedLabel) {
+    pausedLabel.remove();
+  }
+}
+
+function updateFloatControls() {
+  const btn = document.getElementById('btnPauseResume');
+  if (!btn) return;
+  if (isTimerPaused()) {
+    btn.textContent = '▶ Resume';
+    btn.title = 'Resume';
+    btn.classList.remove('btn-pause');
+    btn.classList.add('btn-resume');
+  } else {
+    btn.textContent = '⏸ Pause';
+    btn.title = 'Pause';
+    btn.classList.remove('btn-resume');
+    btn.classList.add('btn-pause');
   }
 }
 

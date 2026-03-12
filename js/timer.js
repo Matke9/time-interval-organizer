@@ -132,8 +132,12 @@ export function skipTimer() {
   state.activeTimer = null;
   saveState();
 
-  // Auto-start break timer after skipping an activity segment
-  startDefaultTimer();
+  // Auto-start break timer after skipping an activity segment (only if break > 0)
+  if (state.defaultTimer.durationMinutes > 0) {
+    startDefaultTimer();
+  } else {
+    updateUI();
+  }
 }
 
 // ─── Tick — called by setInterval every 250ms ─────────────────────────────────
@@ -170,8 +174,12 @@ function handleTimerComplete() {
     }
     state.activeTimer = null;
     saveState();
-    // Start break after activity
-    startDefaultTimer();
+    // Start break after activity (only if break > 0)
+    if (state.defaultTimer.durationMinutes > 0) {
+      startDefaultTimer();
+    } else {
+      updateUI();
+    }
   } else {
     // Break complete — just clear the timer
     state.activeTimer = null;
