@@ -81,12 +81,12 @@ function buildSegmentBar(segments) {
 
 function getSessionStats() {
   const totalSec = state.totalTimeMinutes * 60;
-  // Count seconds elapsed based on completed segment durations
+  // Count seconds elapsed based on segment durations and actual time spent
   let elapsedSec = 0;
   state.activities.forEach((a) => {
     a.segments.forEach((seg) => {
       if (seg.status === 'completed') {
-        elapsedSec += seg.durationMinutes * 60;
+        elapsedSec += seg.durationMinutes * 60 - seg.remainingSeconds;
       } else if (seg.status === 'running' || seg.status === 'paused') {
         const spent = seg.durationMinutes * 60 - seg.remainingSeconds;
         elapsedSec += Math.max(0, spent);

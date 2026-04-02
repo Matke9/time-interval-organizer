@@ -121,11 +121,14 @@ export function resumeTimer() {
 export function skipTimer() {
   if (!state.activeTimer) return;
 
-  if (state.activeTimer.type === 'activity') {
+  const wasActivity = state.activeTimer.type === 'activity';
+
+  if (wasActivity) {
+    const remaining = getCurrentRemainingSeconds();
     const seg = findSegment(state.activeTimer.activityId, state.activeTimer.segmentId);
     if (seg) {
       seg.status = 'completed';
-      seg.remainingSeconds = 0;
+      seg.remainingSeconds = remaining;
     }
   }
 
@@ -133,7 +136,7 @@ export function skipTimer() {
   saveState();
 
   // Auto-start break timer after skipping an activity segment (only if break > 0)
-  if (state.defaultTimer.durationMinutes > 0) {
+  if (wasActivity && state.defaultTimer.durationMinutes > 0) {
     startDefaultTimer();
   } else {
     updateUI();
