@@ -105,7 +105,7 @@ function updatePageTitle() {
     const remainingSeconds = isPaused
       ? state.activeTimer.pausedRemainingSeconds
       : Math.max(0, Math.floor((state.activeTimer.endTime - Date.now()) / 1000));
-    const prefix = isPaused ? '⏸ ' : '▶ ';
+    const prefix = isPaused ? '[Paused] ' : '[Running] ';
     document.title = `${prefix}${formatTime(remainingSeconds)} — Focus Timer`;
   } else {
     document.title = 'Focus Timer';
