@@ -155,6 +155,62 @@ input[type="number"]:focus {
   border-radius: 10px;
   padding: 12px 14px;
   gap: 12px;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+
+.activity-row.dragging {
+  opacity: 0.45;
+}
+
+.activity-row.drag-over {
+  border-color: var(--accent2);
+  background: rgba(83, 216, 251, 0.08);
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0 2px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.activity-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Inline edit form */
+
+.activity-row-editing {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.activity-edit-inline {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+}
+
+.activity-edit-inline input[type="text"] {
+  flex: 1;
+  min-width: 120px;
+}
+
+.activity-edit-inline input[type="number"] {
+  width: 80px;
 }
 
 .activity-info {
@@ -205,6 +261,42 @@ input[type="number"]:focus {
 }
 
 .btn-remove:hover { background: rgba(233,69,96,0.15); }
+
+.btn-edit {
+  background: transparent;
+  border: 1px solid var(--accent2);
+  color: var(--accent2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.btn-edit:hover { background: rgba(83,216,251,0.15); }
+
+.btn-save-edit {
+  background: var(--success);
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.btn-save-edit:hover { opacity: 0.85; }
+
+.btn-cancel-edit {
+  background: transparent;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.btn-cancel-edit:hover { background: rgba(154,154,176,0.15); }
 
 .btn-start {
   display: block;

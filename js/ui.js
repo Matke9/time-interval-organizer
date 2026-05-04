@@ -8,6 +8,8 @@ import {
   recalculateBudget,
   addActivity,
   removeActivity,
+  updateActivity,
+  reorderActivities,
 } from './state.js';
 
 import {
@@ -19,6 +21,11 @@ import {
   skipTimer,
   exitFocusMode,
 } from './timer.js';
+
+// ─── Edit-mode state (config view) ───────────────────────────────────────────
+
+let editingActivityId = null;
+let dragSrcIndex = null;
 
 // ─── Audio ────────────────────────────────────────────────────────────────────
 
@@ -115,18 +122,37 @@ export function renderConfigView() {
   const budgetClass = state.remainingBudgetMinutes < 0 ? 'budget-over' : '';
 
   const activitiesHTML = state.activities
-    .map(
-      (a) => `
-      <div class="activity-row" data-id="${a.id}">
-        <div class="activity-info">
-          <span class="activity-name">${escapeHtml(a.name)}</span>
-          <span class="activity-meta">${a.durationMinutes} min × ${a.repetitions} reps = ${a.durationMinutes * a.repetitions} min</span>
-          <div class="seg-preview">${buildSegmentBar(a.segments)}</div>
+    .map((a, index) => {
+      if (a.id === editingActivityId) {
+        return `
+          <div class="activity-row activity-row-editing" data-id="${a.id}" data-index="${index}">
+            <div class="activity-edit-inline">
+              <input type="text" class="edit-act-name" value="${escapeHtml(a.name)}" maxlength="40" placeholder="Activity name">
+              <input type="number" class="edit-act-duration" min="1" max="240" value="${a.durationMinutes}" placeholder="min">
+              <input type="number" class="edit-act-reps" min="1" max="20" value="${a.repetitions}" placeholder="reps">
+            </div>
+            <div class="activity-row-actions">
+              <button class="btn-save-edit" data-save="${a.id}" aria-label="Save changes">✓ Save</button>
+              <button class="btn-cancel-edit" data-cancel="${a.id}" aria-label="Cancel edit">✕</button>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="activity-row" data-id="${a.id}" data-index="${index}" draggable="true">
+          <span class="drag-handle" aria-hidden="true" title="Drag to reorder">⠿</span>
+          <div class="activity-info">
+            <span class="activity-name">${escapeHtml(a.name)}</span>
+            <span class="activity-meta">${a.durationMinutes} min × ${a.repetitions} reps = ${a.durationMinutes * a.repetitions} min</span>
+            <div class="seg-preview">${buildSegmentBar(a.segments)}</div>
+          </div>
+          <div class="activity-row-actions">
+            <button class="btn-edit" data-edit="${a.id}" aria-label="Edit ${escapeHtml(a.name)}">✏</button>
+            <button class="btn-remove" data-remove="${a.id}" aria-label="Remove ${escapeHtml(a.name)}">✕</button>
+          </div>
         </div>
-        <button class="btn-remove" data-remove="${a.id}" aria-label="Remove ${escapeHtml(a.name)}">✕</button>
-      </div>
-    `
-    )
+      `;
+    })
     .join('');
 
   const canStart = state.activities.length > 0;
@@ -226,6 +252,92 @@ export function renderConfigView() {
       const id = btn.dataset.remove;
       removeActivity(id);
       renderConfigView();
+    });
+  });
+
+  // Edit buttons
+  document.querySelectorAll('[data-edit]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      editingActivityId = btn.dataset.edit;
+      renderConfigView();
+    });
+  });
+
+  // Save edit buttons
+  document.querySelectorAll('[data-save]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.save;
+      const row = document.querySelector(`.activity-row[data-id="${id}"]`);
+      if (!row) return;
+      const name = row.querySelector('.edit-act-name').value.trim();
+      const duration = parseInt(row.querySelector('.edit-act-duration').value, 10);
+      const reps = parseInt(row.querySelector('.edit-act-reps').value, 10);
+      if (!name) { alert('Please enter an activity name.'); return; }
+      if (!duration || duration < 1) { alert('Please enter a valid duration (1–240 min).'); return; }
+      if (!reps || reps < 1) { alert('Please enter a valid number of repetitions (1–20).'); return; }
+      editingActivityId = null;
+      updateActivity(id, name, duration, reps);
+      renderConfigView();
+    });
+  });
+
+  // Cancel edit buttons
+  document.querySelectorAll('[data-cancel]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      editingActivityId = null;
+      renderConfigView();
+    });
+  });
+
+  // Keyboard shortcuts inside the inline edit form
+  document.querySelectorAll('.activity-row-editing input').forEach((input) => {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const saveBtn = input.closest('.activity-row-editing').querySelector('[data-save]');
+        if (saveBtn) saveBtn.click();
+      } else if (e.key === 'Escape') {
+        editingActivityId = null;
+        renderConfigView();
+      }
+    });
+  });
+
+  // Auto-focus name field when entering edit mode
+  if (editingActivityId) {
+    const nameInput = document.querySelector('.edit-act-name');
+    if (nameInput) nameInput.focus();
+  }
+
+  // Drag and drop reordering
+  document.querySelectorAll('.activity-row[draggable="true"]').forEach((row) => {
+    row.addEventListener('dragstart', (e) => {
+      dragSrcIndex = parseInt(row.dataset.index, 10);
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      document.querySelectorAll('.activity-row').forEach((r) => r.classList.remove('drag-over'));
+      dragSrcIndex = null;
+    });
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      document.querySelectorAll('.activity-row').forEach((r) => r.classList.remove('drag-over'));
+      row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', (e) => {
+      if (!row.contains(e.relatedTarget)) {
+        row.classList.remove('drag-over');
+      }
+    });
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const targetIndex = parseInt(row.dataset.index, 10);
+      if (dragSrcIndex !== null && dragSrcIndex !== targetIndex) {
+        reorderActivities(dragSrcIndex, targetIndex);
+        renderConfigView();
+      }
     });
   });
 

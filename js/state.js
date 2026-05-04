@@ -66,6 +66,33 @@ export function addActivity(name, durationMinutes, repetitions) {
   saveState();
 }
 
+export function updateActivity(activityId, name, durationMinutes, repetitions) {
+  const activity = findActivity(activityId);
+  if (!activity) return;
+  // Name changes don't affect segments; only duration/reps changes require re-expansion.
+  activity.name = name.trim();
+  if (activity.durationMinutes !== durationMinutes || activity.repetitions !== repetitions) {
+    activity.durationMinutes = durationMinutes;
+    activity.repetitions = repetitions;
+    activity.segments = expandSegments(activity);
+  }
+  recalculateBudget();
+  saveState();
+}
+
+export function reorderActivities(fromIndex, toIndex) {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= state.activities.length ||
+    toIndex >= state.activities.length
+  ) return;
+  const [item] = state.activities.splice(fromIndex, 1);
+  state.activities.splice(toIndex, 0, item);
+  saveState();
+}
+
 export function removeActivity(activityId) {
   state.activities = state.activities.filter((a) => a.id !== activityId);
   // If the removed activity was active, clear the timer
