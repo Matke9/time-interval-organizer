@@ -327,15 +327,15 @@ input[type="number"]:focus {
   justify-content: center;
   gap: 10px;
   cursor: pointer;
-  transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
   text-align: center;
   min-height: 160px;
   user-select: none;
 }
 
 .focus-card:hover:not(.card-done) {
-  transform: translateY(-2px);
   border-color: var(--accent2);
+  box-shadow: 0 6px 24px rgba(83, 216, 251, 0.2);
 }
 
 .focus-card:focus {
