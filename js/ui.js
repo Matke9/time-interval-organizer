@@ -106,7 +106,21 @@ function getSessionStats() {
 
 // ─── Master render ────────────────────────────────────────────────────────────
 
+function updatePageTitle() {
+  if (state.activeTimer) {
+    const isPaused = state.activeTimer.pausedRemainingSeconds !== null;
+    const remainingSeconds = isPaused
+      ? state.activeTimer.pausedRemainingSeconds
+      : Math.max(0, Math.floor((state.activeTimer.endTime - Date.now()) / 1000));
+    const prefix = isPaused ? '[Paused] ' : '[Running] ';
+    document.title = `${prefix}${formatTime(remainingSeconds)} — Focus Timer`;
+  } else {
+    document.title = 'Focus Timer';
+  }
+}
+
 export function updateUI() {
+  updatePageTitle();
   if (state.focusMode) {
     renderFocusMode();
   } else {
@@ -513,6 +527,9 @@ function fullRenderFocusMode(app) {
 }
 
 function incrementalUpdateFocusMode() {
+  // Update page title with current timer countdown
+  updatePageTitle();
+
   // Update session stats
   const { elapsedSec, remainingSec } = getSessionStats();
   const sessionTimeEl = document.querySelector('.session-time');
